@@ -33,28 +33,20 @@ export default function Home() {
   const [searchQuery, setSearchQuery] = useState<string>("");
   const [filteredGames, setFilteredGames] = useState<Game[]>([]);
 
-  useEffect(() => {
-    const fetchGames = async () => {
-      try {
-        const response = await fetch("https://localhost:7228/api/Game/games");
+  const fetchData = async () => {
+    try {
+      const response = await fetch("https://localhost:7228/api/Game/games");
 
-        if (!response.ok) {
-          throw new Error("Failed to fetch games");
-        }
-
-        const data = await response.json();
-        setGames(data);
-      } catch (error) {
-        console.error(error);
+      if (!response.ok) {
+        throw new Error("Failed to fetch games");
       }
-    };
 
-    fetchGames();
-  }, []);
-
-  useEffect(() => {
-    console.log(games);
-  }, [games]);
+      const data = await response.json();
+      setGames(data);
+    } catch (error) {
+      console.error(error);
+    }
+  };
 
   const deleteGame = async (id: number) => {
     try {
@@ -69,7 +61,6 @@ export default function Home() {
         throw new Error("Failed to delete game");
       }
 
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
       setGames((prevGames) => prevGames.filter((game: Game) => game.id !== id));
     } catch (error) {
       console.error(error);
@@ -79,6 +70,7 @@ export default function Home() {
   const togglePlayed = async (id: number) => {
     try {
       const game = games.find((g: Game) => g.id === id);
+
       if (!game) return;
 
       const response = await fetch(
@@ -98,7 +90,8 @@ export default function Home() {
     }
   };
 
-  const onNameSearch = (query: string) => {
+  // Utils
+  const onSearch = (query: string) => {
     setSearchQuery(query);
     const filtered = games.filter(
       (game) =>
@@ -112,18 +105,24 @@ export default function Home() {
   const onSort = (value: string) => {
     const sorted = [...(filteredGames.length > 0 ? filteredGames : games)].sort(
       (a, b) => {
-        if (value === "name") {
-          return a.name.localeCompare(b.name);
-        } else if (value === "developer") {
-          return a.developer.localeCompare(b.developer);
-        } else if (value === "date") {
-          return a.releaseDate - b.releaseDate;
+        switch (value) {
+          case "name":
+            return a.name.localeCompare(b.name);
+          case "developer":
+            return a.developer.localeCompare(b.developer);
+          case "date":
+            return a.releaseDate - b.releaseDate;
+          default:
+            return 0;
         }
-        return 0;
       }
     );
     setFilteredGames(sorted);
   };
+
+  useEffect(() => {
+    fetchData();
+  }, []);
 
   return (
     <main>
@@ -168,7 +167,7 @@ export default function Home() {
               placeholder="Search games..."
               className="px-4 py-2 rounded-lg border border-gray-200 focus:outline-none focus:ring-2 focus:ring-gray-200"
               value={searchQuery}
-              onChange={(e) => onNameSearch(e.target.value)}
+              onChange={(e) => onSearch(e.target.value)}
             />
             <select
               className="px-4 py-2 rounded-lg border border-gray-200 focus:outline-none focus:ring-2 focus:ring-gray-200"
